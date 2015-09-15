@@ -26,11 +26,26 @@ public class GameFrame extends JFrame implements KeyListener{
 	JScrollPane input;
 
 	Image bgImage;
+		// if it is for connection
+	private boolean connected;
+	// the Client object
+	private Client client;
+	// the default port number
+	private int defaultPort;
+	private String defaultHost;
+
 
 	String message = "";
 
-	public GameFrame(){
+	String username = "pogi";
+	String server = "192.168.1.33";
+	int port = 8000;
+
+	GameFrame(String host, int port){
 		super("Dat CoC");
+
+		defaultPort = port;
+		defaultHost = host;
 
 		JPanel mainPanel = new JPanel();
 		gamePanel = new Background();
@@ -73,53 +88,33 @@ public class GameFrame extends JFrame implements KeyListener{
 		}catch(Exception e){}
 		gamePanel.setImage(new ImageIcon(bgImage));
 
-		this.runChat();
+		this.connect();
+		//this.runChat();
 	}
-
-	public void runChat(){
-		try
-      	{
-   	  	String serverName = "192.168.1.110"; //get IP address of server from first param
-		int port = 8000; //get port from second param
-
-		/* Open a ClientSocket and connect to ServerSocket */
-		System.out.println("Connecting to " + serverName + " on port " + port);
-		while(true){	
-			try{
-				Thread.sleep(100);
-			}catch(Exception e){}
-			Socket client = new Socket(serverName, port);
-
-			System.out.println("Just connected to " + client.getRemoteSocketAddress());
-			
-			//Send data to server, dito sinesend yung message sa server bago iupdate yung chat
-			OutputStream outToServer = client.getOutputStream();
-			DataOutputStream out = new DataOutputStream(outToServer);
-			out.writeUTF(message);
-			message = ""; //magiging empty yung message after isend sa server
-
-			//Recieve data sa server, dito inuupdate yung chat
-			InputStream inFromServer = client.getInputStream();
-			DataInputStream in = new DataInputStream(inFromServer);
-			chatDisplay.setText(""); //clear yung dinidisplay sa chat
-			chatDisplay.setText(in.readUTF()); //tapos idisplay yung updated na chat
-			client.close();
-	    }
-	      
-      }catch(IOException e)
-      {
-         //e.printStackTrace();
-      	System.out.println("Cannot find Server");
-      }catch(ArrayIndexOutOfBoundsException e)
-      {
-         System.out.println("Usage: java GreetingClient <server ip> <port no.> '<your message to the server>'");
-      }
+	void connect(){
+		client = new Client(server, port, username, this);	
+			if(!client.start()) 
+				return;
+			chatArea.setText("");
+			connected = true;
 	}
-
+	void append(String str) {
+		chatDisplay.append(str);
+		chatDisplay.setCaretPosition(chatDisplay.getText().length() - 1);
+	}
+	void connectionFailed() {
+		connected = false;
+	}
 	public void keyReleased(KeyEvent e){
 		if(e.getKeyCode() == KeyEvent.VK_ENTER && !(chatArea.getText().matches("^\\s*$"))){ //upon enter, chats
 			message = chatArea.getText(); //everytime mageenter ng chat, magkakavalue yung 'message' since yun yung pinapasa sa server
-			chatArea.setText("");		
+			chatArea.setText("");	
+			if(connected) {
+			// just have to send the message
+			client.sendMessage(new ChatMessage(ChatMessage.MESSAGE, message));				
+			chatArea.setText("");
+			return;
+			}
 		}
 	}
 	public void keyPressed(KeyEvent e){}
