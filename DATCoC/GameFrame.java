@@ -3,9 +3,11 @@ import javax.swing.JPanel;
 import javax.swing.JButton;
 import javax.swing.JTextArea;
 import javax.swing.JScrollPane;
+import javax.swing.JTextField;
 import java.awt.Dimension;
 import java.awt.Color;
 import java.awt.BorderLayout;
+import java.awt.CardLayout;
 import java.awt.event.KeyListener;
 import java.awt.event.KeyEvent;
 import java.net.*;
@@ -15,16 +17,25 @@ import java.awt.Image;
 import javax.swing.ImageIcon;
 
 public class GameFrame extends JFrame implements KeyListener{
-	Background gamePanel;
+	//Background gamePanel;
+	JPanel gamePanel;
 
+	JPanel base;
+	JPanel loginPanel;
 	JPanel chatPanel;
 	JPanel chatInput;
+
 	JButton submitChat;
+	JButton createGame;
+	JButton joinGame;
+	
+	JTextField login;
 	JTextArea chatArea;
 	JTextArea chatDisplay;
 	JScrollPane chatbox;
 	JScrollPane input;
 
+	CardLayout cards;
 	Image bgImage;
 		// if it is for connection
 	private boolean connected;
@@ -37,8 +48,8 @@ public class GameFrame extends JFrame implements KeyListener{
 
 	String message = "";
 
-	String username = "pogi";
-	String server = "192.168.1.33";
+	String username = "";
+	String server = "10.0.5.181";
 	int port = 8000;
 
 	GameFrame(String host, int port){
@@ -48,23 +59,42 @@ public class GameFrame extends JFrame implements KeyListener{
 		defaultHost = host;
 
 		JPanel mainPanel = new JPanel();
-		gamePanel = new Background();
+		//gamePanel = new Background();\
+		gamePanel = new JPanel();
+		base = new JPanel();
+		loginPanel = new JPanel();
 		chatPanel = new JPanel();
 		chatInput = new JPanel();
+
 		submitChat = new JButton("Submit");
+		createGame = new JButton("Create Game");
+		joinGame = new JButton("Join Game");
+
+		login = new JTextField();
 		chatArea = new JTextArea();
 		chatDisplay = new JTextArea();
 		chatbox = new JScrollPane(chatDisplay);
 		input = new JScrollPane(chatArea);
 
+		cards = new CardLayout();
+
 		chatDisplay.setEditable(false);
 
 		submitChat.setPreferredSize(new Dimension(75,50));
 		chatArea.addKeyListener(this); //dito lang yung may KeyListener, para pag sa game naka focus yung mouse at napindot enter di magcchat
+		login.addKeyListener(this);
 
 		mainPanel.setLayout(new BorderLayout());
-		mainPanel.add(gamePanel, BorderLayout.CENTER);
+		mainPanel.add(base, BorderLayout.CENTER);
 		mainPanel.add(chatPanel, BorderLayout.EAST);
+
+		base.setLayout(cards);
+		base.add(loginPanel, "loginPanel");
+		base.add(gamePanel, "gamePanel");
+
+		//loginPanel.setBackground(Color.RED);
+		loginPanel.add(login);
+		login.setPreferredSize(new Dimension(300,100));
 
 		chatPanel.setPreferredSize(new Dimension(250,100));
 		chatPanel.setLayout(new BorderLayout());
@@ -76,6 +106,8 @@ public class GameFrame extends JFrame implements KeyListener{
 		chatInput.add(submitChat, BorderLayout.EAST);
 
 		gamePanel.setBackground(new Color(255,0,255));
+		gamePanel.add(createGame);
+		gamePanel.add(joinGame);
 
 		this.setContentPane(mainPanel);
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -86,9 +118,9 @@ public class GameFrame extends JFrame implements KeyListener{
 		try{
 			bgImage = ImageIO.read(this.getClass().getResource("res/bg.png"));
 		}catch(Exception e){}
-		gamePanel.setImage(new ImageIcon(bgImage));
+		//gamePanel.setImage(new ImageIcon(bgImage));
 
-		this.connect();
+		
 		//this.runChat();
 	}
 	void connect(){
@@ -115,6 +147,11 @@ public class GameFrame extends JFrame implements KeyListener{
 			chatArea.setText("");
 			return;
 			}
+		} else if(e.getKeyCode() == KeyEvent.VK_ENTER && (login.getText().matches("^\\w+$"))){
+			cards.show(base, "gamePanel");
+			username = login.getText();
+
+			this.connect();
 		}
 	}
 	public void keyPressed(KeyEvent e){}
